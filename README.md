@@ -1,4 +1,4 @@
-# HadoopBenchmarks
+# Hadoop Benchmarks
 
 A list of Hadoop Ecosystem Benchmark Links for reference..  
 
