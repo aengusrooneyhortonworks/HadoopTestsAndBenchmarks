@@ -17,3 +17,7 @@ https://github.com/hortonworks/hive-testbench
 https://github.com/cartershanklin/phoenix-performance
 
 https://github.com/sunileman/MapReduce-Performance_Testing 
+
+https://engineering.linkedin.com/kafka/benchmarking-apache-kafka-2-million-writes-second-three-cheap-machines
+& 
+https://gist.github.com/jkreps/c7ddb4041ef62a900e6c
