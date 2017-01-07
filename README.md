@@ -1,10 +1,12 @@
 # Hadoop Benchmarks
 
-A list of Hadoop Ecosystem Benchmark Links for reference..  
+A list of Hadoop Ecosystem Benchmark Links for reference 
 
 http://www.michael-noll.com/blog/2011/04/09/benchmarking-and-stress-testing-an-hadoop-cluster-with-terasort-testdfsio-nnbench-mrbench/ 
 
 http://www.tpc.org/tpcx-hs/ 
+
+https://github.com/intel-hadoop/HiBench 
 
 https://github.com/brianfrankcooper/YCSB/wiki 
 
@@ -17,6 +19,8 @@ https://github.com/hortonworks/hive-testbench
 https://github.com/cartershanklin/phoenix-performance
 
 https://github.com/sunileman/MapReduce-Performance_Testing 
+
+https://github.com/saurabhmishra/benchmarkhadoop 
 
 https://engineering.linkedin.com/kafka/benchmarking-apache-kafka-2-million-writes-second-three-cheap-machines
 & 
