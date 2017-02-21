@@ -88,7 +88,10 @@ Spark
 
 https://community.hortonworks.com/content/kbentry/56158/benchmark-your-hardware-for-hadoop-spark.html 
 
-Kafka 
+https://github.com/databricks/spark-sql-perf 
+
+Kafka  
+
 https://engineering.linkedin.com/kafka/benchmarking-apache-kafka-2-million-writes-second-three-cheap-machines
 & 
 https://gist.github.com/jkreps/c7ddb4041ef62a900e6c
