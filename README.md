@@ -52,6 +52,8 @@ https://github.com/databricks/spark-perf
 
 https://github.com/databricks/spark-sql-perf 
 
+http://01org.github.io/sparkscore/plaf1.html
+
 Kafka 
 
 https://engineering.linkedin.com/kafka/benchmarking-apache-kafka-2-million-writes-second-three-cheap-machines
