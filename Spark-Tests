@@ -1,0 +1,296 @@
+ 
+Download spark2 packages from the HDP 2.6 repo 
+(http://docs.hortonworks.com/HDPDocuments/HDP2/HDP-2.6.0/bk_release-notes/content/download-links.html)
+ 
+[root@node1 ~]# ls -lh /tmp/spark2
+total 187M
+-rw-r--r--. 1 root root 174M Apr 11 19:39 spark2_2_6_0_3_8-2.1.0.2.6.0.3-8.noarch.rpm
+-rw-r--r--. 1 root root 4.9K Apr 11 19:36 spark2_2_6_0_3_8-master-2.1.0.2.6.0.3-8.noarch.rpm
+-rw-r--r--. 1 root root 872K Apr 11 19:37 spark2_2_6_0_3_8-python-2.1.0.2.6.0.3-8.noarch.rpm
+-rw-r--r--. 1 root root 4.9K Apr 11 19:37 spark2_2_6_0_3_8-worker-2.1.0.2.6.0.3-8.noarch.rpm
+-rw-r--r--. 1 root root  12M Apr 11 19:37 spark2_2_6_0_3_8-yarn-shuffle-2.1.0.2.6.0.3-8.noarch.rpm
+
+Install Spark2 
+ 
+Install the packages via RPM Package Manager. Use the “—nodeps” to ignore the dependencies on HDP 2.6 packages
+ 
+[root@node1 ~]# rpm -ivh --nodeps /tmp/spark2/*
+Preparing...                ########################################### [100%]
+   1:spark2_2_6_0_3_8-yarn-s########################################### [ 20%]
+   2:spark2_2_6_0_3_8       ########################################### [ 40%]
+   3:spark2_2_6_0_3_8-master########################################### [ 60%]
+   4:spark2_2_6_0_3_8-python########################################### [ 80%]
+   5:spark2_2_6_0_3_8-worker########################################### [100%]
+[root@node1 ~]#
+ 
+Spark should now be installed under /usr/hdp/2.6.0.3-8/spark2 (SPARK_HOME=/usr/hdp/2.6.0.3-8/spark2)
+       
+Configure Spark2
+ 
+(Ref : http://docs.hortonworks.com/HDPDocuments/HDP2/HDP-2.6.0/bk_command-line-installation/content/configuring_spark2.html)
+ 
+If running multiple versions, check spark2 conf dir symlink points to /usr/hdp/2.6.0.3-8/etc/spark2/conf (not /usr/hdp/2.6.0.3-8/spark2/conf, by default points to /etc/spark2/conf)
+ 
+Create required directories
+ 
+[root@node1 ~]# mkdir /var/log/spark2
+[root@node1 ~]# chown spark:hdfs /var/log/spark2
+ 
+[root@node1 ~]# mkdir /var/run/spark2
+[root@node1 ~]# chown spark:hdfs /var/run/spark2
+ 
+[hdfs@node1 ~]$ hdfs dfs -mkdir /spark2-history
+[hdfs@node1 ~]$ hdfs dfs -chown -R spark:hadoop /spark2-history
+[hdfs@node1 ~]$ hdfs dfs -chmod -R 777 /spark2-history
+ 
+ 
+Configure hive-site.xml
+ 
+Create /usr/hdp/2.6.0.3-8/spark2/conf/hive-site.xml with the below content:
+ 
+[root@node1 ~]# cat /usr/hdp/2.6.0.3-8/spark2/conf/hive-site.xml
+<configuration>
+    <property>
+      <name>hive.metastore.uris</name>
+      <value>thrift://<host_running_hive_metastore>:9083</value>
+    </property>
+</configuration>
+ 
+Configure spark-env.sh
+ 
+Modify/add the below lines in /usr/hdp/2.6.0.3-8/spark2/conf/spark-env.sh
+  
+Before
+ 
+export HADOOP_HOME=/usr/hdp/2.6.0.3-8/hadoop
+export HADOOP_CONF_DIR=/usr/hdp/2.6.0.3-8/hadoop/conf
+  
+After
+ 
+export HADOOP_HOME=/usr/hdp/2.5.3.0-37/hadoop
+export HADOOP_CONF_DIR=/usr/hdp/2.5.3.0-37/hadoop/conf
+ 
+export SPARK_LOG_DIR=/var/log/spark2
+export SPARK_PID_DIR=/var/run/spark2
+  
+Configure spark-defaults.conf
+ 
+Modify/add the below lines in /usr/hdp/2.6.0.3-8/spark2/conf/spark-env.sh
+  
+Before
+ 
+spark.driver.extraJavaOptions -Dhdp.version=2.6.0.3-8
+spark.yarn.am.extraJavaOptions -Dhdp.version=2.6.0.3-8
+ 
+After
+ 
+spark.driver.extraJavaOptions -Dhdp.version=2.5.3.0-37
+spark.yarn.am.extraJavaOptions -Dhdp.version=2.5.3.0-37
+ 
+spark.yarn.historyServer.address node1.openstacklocal:18080
+spark.history.ui.port 18080
+spark.eventLog.dir hdfs:///spark2-history
+spark.eventLog.enabled true
+spark.history.fs.logDirectory hdfs:///spark2-history
+spark.history.provider org.apache.spark.deploy.history.FsHistoryProvider
+ 
+Configure spark-thrift-sparkconf.conf
+ 
+Create /usr/hdp/2.6.0.3-8/spark2/conf/spark-thrift-sparkconf.conf with the below contents:
+ 
+[root@node1 conf]# cat /usr/hdp/2.6.0.3-8/spark2/conf/spark-thrift-sparkconf.conf
+spark.eventLog.dir hdfs:///spark2-history
+spark.eventLog.enabled true
+spark.history.fs.logDirectory hdfs:///spark2-history
+spark.history.provider org.apache.spark.deploy.history.FsHistoryProvider
+ 
+Start Spark Thrift server
+ 
+From SPARK_HOME, as the ‘spark’ user, start the Spark 2 SQL Thrift Server. Specify the port value of the Thrift Server (the default is 10015).
+ 
+[spark@node1 ~]$ /usr/hdp/2.6.0.3-8/spark2/sbin/start-thriftserver.sh --master yarn-client --executor-memory 512m --hiveconf hive.server2.thrift.port=10015
+starting org.apache.spark.sql.hive.thriftserver.HiveThriftServer2, logging to /var/log/spark2/spark-spark-org.apache.spark.sql.hive.thriftserver.HiveThriftServer2-1-node1.openstacklocal.out
+[spark@node1 ~]$
+ 
+Customize memory and port if need
+ 
+Use this port to connect via Beeline.
+ 
+Start Spark History Server
+ 
+As the ‘spark’ user, start the Spark History Server
+ 
+[spark@node1 ~]$ /usr/hdp/2.6.0.3-8/spark2/sbin/start-history-server.sh
+starting org.apache.spark.deploy.history.HistoryServer, logging to /var/log/spark2/spark-spark-org.apache.spark.deploy.history.HistoryServer-1-node1.openstacklocal.out
+-bash-4.1$
+ 
+Validate Spark2
+ 
+Spark-submit
+ 
+[user@node1 ~]$ /usr/hdp/2.6.0.3-8/spark2/bin/spark-submit --class org.apache.spark.examples.SparkPi \
+   --master yarn-client \
+   --num-executors 1 \
+   --driver-memory 512m \
+   --executor-memory 512m \
+   --executor-cores 1 \
+   /usr/hdp/2.6.0.3-8/spark2/examples/jars/spark-examples*.jar 10 2>/dev/null
+Pi is roughly 3.1423831423831423
+[user@node1 ~]$
+ 
+Spark-sql
+
+[user@node1 ~]$ hive
+
+Logging initialized using configuration in file:/etc/hive/2.5.3.0-37/0/hive-log4j.properties
+hive> select * from test;
+OK
+1
+2   
+3
+1
+Time taken: 1.299 seconds, Fetched: 4 row(s)
+hive>
+  
+[user@node1 ~]$ /usr/hdp/2.6.0.3-8/spark2/bin/spark-sql 2>/dev/null
+spark-sql> select * from test;
+1
+2
+3
+1
+spark-sql> select distinct (id) from test;
+1
+3
+2
+spark-sql>
+ 
+JDBC connection via beeline
+ 
+[user@node1 ~]$ which beeline
+/usr/bin/beeline
+ 
+[user@node1 ~]$ readlink -e /usr/bin/beeline
+/usr/hdp/2.5.3.0-37/hive/bin/beeline
+ 
+beeline> !connect jdbc:hive2://node1.openstacklocal:10015
+Connecting to jdbc:hive2://node1.openstacklocal:10015
+Enter username for jdbc:hive2://node1.openstacklocal:10015:
+Enter password for jdbc:hive2://node1.openstacklocal:10015:
+Connected to: Spark SQL (version 2.1.0.2.6.0.3-8)
+Driver: Hive JDBC (version 1.2.1000.2.5.3.0-37)
+Transaction isolation: TRANSACTION_REPEATABLE_READ
+0: jdbc:hive2://node1.openstacklocal:10015> show tables;
++-----------+------------+--------------+--+
+| database  | tableName  | isTemporary  |
++-----------+------------+--------------+--+
+| default   | test       | false        |
++-----------+------------+--------------+--+
+1 row selected (1.22 seconds)
+0: jdbc:hive2://node1.openstacklocal:10015> select distinct (id) from test;
++-----+--+
+| id  |
++-----+--+
+| 1   |
+| 3   |
+| 2   |
++-----+--+
+3 rows selected (7.024 seconds)
+0: jdbc:hive2://node1.openstacklocal:10015>
+ 
+ 
+Spark-shell
+
+Dataframes
+ 
+[user@node1 ~]$ /usr/hdp/2.6.0.3-8/spark2/bin/spark-shell
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+17/04/12 21:04:52 WARN util.Utils: Service 'SparkUI' could not bind on port 4041. Attempting port 4042.
+17/04/12 21:04:54 WARN shortcircuit.DomainSocketFactory: The short-circuit local reads feature cannot be used because libhadoop cannot be loaded.
+Spark context Web UI available at http://0.0.0.0:4042
+Spark context available as 'sc' (master = local[*], app id = local-1492031093013).
+Spark session available as 'spark'.
+Welcome to
+      ____              __
+     / __/__  ___ _____/ /__
+    _\ \/ _ \/ _ `/ __/  '_/
+   /___/ .__/\_,_/_/ /_/\_\   version 2.1.0.2.6.0.3-8
+      /_/
+ 
+Using Scala version 2.11.8 (OpenJDK 64-Bit Server VM, Java 1.8.0_121)
+Type in expressions to have them evaluated.
+Type :help for more information.
+ 
+scala> val sqlContext = new org.apache.spark.sql.SQLContext(sc)
+warning: there was one deprecation warning; re-run with -deprecation for details
+sqlContext: org.apache.spark.sql.SQLContext = org.apache.spark.sql.SQLContext@4e343265
+ 
+scala> val df = sqlContext.read.json("/tmp/employees.json")
+17/04/12 21:08:56 WARN datasources.DataSource: Error while looking for metadata directory.
+df: org.apache.spark.sql.DataFrame = [name: string, salary: bigint]
+ 
+scala> df.show()
++-------+------+
+|   name|salary|
++-------+------+
+|Michael|  3000|
+|   Andy|  4500|
+| Justin|  3500|
+|  Berta|  4000|
++-------+------+
+ 
+scala> df.printSchema()
+root
+ |-- name: string (nullable = true)
+ |-- salary: long (nullable = true)
+ 
+scala> df.filter(df("salary") > 3500).show()
++-----+------+
+| name|salary|
++-----+------+
+| Andy|  4500|
+|Berta|  4000|
++-----+------+
+ 
+Datasets
+ 
+scala> val ds = Seq(1, 2, 3).toDS()
+ds: org.apache.spark.sql.Dataset[Int] = [value: int]
+ 
+scala> ds.map(_ + 1).collect()
+res3: Array[Int] = Array(2, 3, 4)
+  
+============================================================
+ 
+scala> case class Employee(name: String, salary: Long)
+defined class Employee
+ 
+scala> val ds = Seq(Employee("Andy", 4500)).toDS()
+ds: org.apache.spark.sql.Dataset[Employee] = [name: string, salary: bigint]
+ 
+ 
+============================================================
+ 
+scala> val employees = sqlContext.read.json(path).as[Employee]
+17/04/12 21:19:23 WARN datasources.DataSource: Error while looking for metadata directory.
+employees: org.apache.spark.sql.Dataset[Employee] = [name: string, salary: bigint]
+ 
+scala> employees.show()
++-------+------+
+|   name|salary|
++-------+------+
+|Michael|  3000|
+|   Andy|  4500|
+| Justin|  3500|
+|  Berta|  4000|
++-------+------+
+
+
+Monitoring 
+ 
+Check resource manager showing spark-submit jobs  
+ 
+Check Spark Thrift UI showing completed job submitted via JDBC 
+
+Check Spark History server showing all spark jobs 
+
